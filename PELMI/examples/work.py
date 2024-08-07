@@ -730,7 +730,7 @@ def data_subment1(nested_list):
     print(z)
     return data_sub, miss_index
 
-def decode(dna_segments):
+def decode1(dna_segments):
     # 去除标识位
     dna_segments, miss_index_in_del = remove_flag(dna_segments)
     # 数据转化
@@ -840,8 +840,8 @@ def enhance_image_main(data_r, error_index):
     return data_r
 
 
-def bit_to_image(img, compressed_data , compressed_data1 ,compressed_data2, error_index_all):
-    img = Image.open(img)
+def bit_to_image(read_image_path, write_file_path, compressed_data , compressed_data1 ,compressed_data2, error_index_all):
+    img = Image.open(read_image_path)
     red_channel, green_channel, blue_channel = img.split()
     img_np = np.array(red_channel)
     error_index = error_index_all[0]
@@ -878,10 +878,10 @@ def bit_to_image(img, compressed_data , compressed_data1 ,compressed_data2, erro
     reconstructed_image = Image.merge("RGB", (reconstructed_red_channel, reconstructed_red_channel1, reconstructed_red_channel2))
     # reconstructed_image = Image.merge("RGB", (red_channel, green_channel, blue_channel))
     reconstructed_image.show()
-    #path = "no_err.jpg"
-    #path1 = "this-work-Lisa-0.01-del.jpg"
-    path = "no_err.jpg"
-    path1 = "1this-work-Lisa-0.01-sus-del.jpg"
+
+
+    path = read_image_path
+    path1 =  write_file_path
     reconstructed_image.save(path1)
     # 测出所有图像的数据
     image_quantity_test(path, path1)
@@ -890,6 +890,34 @@ def bit_to_image(img, compressed_data , compressed_data1 ,compressed_data2, erro
     #image_quantity_test(path, path2)
 
 
+# 写出数据
+def write_dna_file(path, dna_sequences):
+
+    with open(path, "w") as file:
+        for index, dna_sequence in enumerate(dna_sequences):
+            file.write("".join(dna_sequence) + "\n")
+
+
+    return True
+
+# 读取序列
+def read_dna_file(file_name):
+    """
+    dna_sequences = []
+    with open(path, "r") as file:
+        lines = file.readlines()
+        for index, line in enumerate(lines):
+            dna_sequences.append(list(line.replace("\n", "")))
+            #dna_sequences.append(line.replace("\n", ""))
+
+    # Specify the file name
+    file_name = 'binary_strings.txt'
+    """
+    # Read the file and store the lines in a list
+    with open(file_name, 'r') as file:
+        binary_strings = [line.strip() for line in file]
+
+    return binary_strings
 
 # 错误加入
 def error_add(data,error_rate):
@@ -928,7 +956,7 @@ def is_string(data):
     return isinstance(data, str)
 
 # path---图像的文件名
-def pipeline(path, error_rate):
+def pipeline(path, error_rate,dna_path):
     # 获得三通道二进制数据
     iamge_channel_bits = []
     compressed_data, compressed_data1, compressed_data2 = image_to_bit(path)
@@ -952,8 +980,25 @@ def pipeline(path, error_rate):
         # 错误加入
         dna_segments = error_add(dna_segments, error_rate)
         dna_segments_all.append(dna_segments)
+        write_dna_file(dna_path, dna_segments_all)
+    return dna_segments_all
+# decode
+def decode(read_image_path, write_file_path, dna_segments_all):
+    """
+    # 读取DNA序列，将DNA序列分为三等份
+    dna_segments_all = []
+    dna = read_dna_file(dna_path)
+    seg_three_length = int(len(dna)/3)
+
     for i in range(3):
-        bits_segments, miss_index = decode(dna_segments_all[i])
+        dna_segments_all.append(dna[i*seg_three_length: (i+1)*seg_three_length])
+    """
+
+    bits_segment_all = []
+    miss_index_all = []
+    t = dna_segments_all[0]
+    for i in range(3):
+        bits_segments, miss_index = decode1(dna_segments_all[i])
         bits_segments1 = ""
         for j in range(len(bits_segments)):
             if is_string(bits_segments[j]) and len(bits_segments[j]) == 256:
@@ -978,9 +1023,20 @@ def pipeline(path, error_rate):
         bits_segment_all.append(bits_segments1)
         miss_index_all.append(miss_index)
     # 将二进制数据转为  图像部分
+    bit_to_image(read_image_path, write_file_path, bits_segment_all[0], bits_segment_all[1], bits_segment_all[2], miss_index_all)
 
-    bit_to_image("Lisa.jpg", bits_segment_all[0], bits_segment_all[1], bits_segment_all[2], miss_index_all)
-pipeline("Lisa.jpg", 0.02)
+if __name__ == "__main__":
+    # 编码部分 
+    read_image_path = "Lisa.jpg"
+    dna_path = "Restrust.dna"
+    error_rate = 0.01
+    dna_path1 = pipeline(read_image_path,error_rate,dna_path)
+
+    # 解码部分
+    write_file_path = "Restrust_ima.jpg"
+    decode(read_image_path,write_file_path, dna_path1)
+
+
 
 
 

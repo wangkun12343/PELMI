@@ -18,7 +18,7 @@ if __name__ == "__main__":
         "image1.jpg": os.path.join(root_path, "data", "pictures", "Lisa.jpg")
     }
     coding_schemes = {
-        #"DNAFountain et al.": YinYangCode()
+
         "Grass et al.": Grass()
     }
     error_corrections = {
